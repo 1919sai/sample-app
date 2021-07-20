@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sampleapp-deployment
+  labels:
+    name: sampleapp-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sampleapp-deployment
+  template:
+    metadata:
+      labels:
+        app: sampleapp-deployment
+        deployment-name: sampleapp-deployment
+    spec:
+      imagePullSecrets:
+        - name: docker-registry-secret
+      containers:
+      - name: sampleapp
+        image: docker-training/sampleapptest:latest
+        imagePullPolicy: "Always"
+        env:
+        - name: NODE_ENV
+          value: DEV
+        - name: DB_URL
+          value: mongodb://mongodb-user:#test123@mongodb-pod-resources-svc.tcm.svc.cluster.local:27017/samplecurd?authSource=admin
+        ports: 
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+     

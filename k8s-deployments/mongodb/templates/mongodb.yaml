@@ -1,0 +1,75 @@
+---
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: mongodb-pod-resources
+spec:
+  members: 1
+  type: ReplicaSet
+  version: 4.4.5
+  security:
+    authentication:
+      modes: ["SCRAM"]
+    roles:
+      - role: pp
+        db: admin   
+        privileges:
+          - resource:
+              db: "mongodb"
+              collection: ""
+            actions:
+              - find 
+        roles: []
+  users:
+    - name: mongodb-user
+      db: admin
+      passwordSecretRef: # a reference to the secret that will be used to generate the user's password
+        name: mongodb-user-secret
+      roles:
+        - name: clusterAdmin
+          db: admin
+        - name: userAdminAnyDatabase
+          db: admin
+        - name: readWrite
+          db: admin
+        - name: readWrite
+          db: samplecurd
+        - name: readWrite
+          db: sampleapp
+      scramCredentialsSecretName: my-scrami
+
+  statefulSet:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+          - name: docker-registry-secret
+          # resources can be specified by applying an override
+          # per container name.
+          containers:
+            - name: mongod
+              resources:
+                limits:
+                  cpu: "0.2"
+                  memory: 200M
+                requests:
+                  cpu: "0.2"
+                  memory: 200M
+            - name: mongodb-agent
+              resources:  
+                limits:  
+                  cpu: "0.2"
+                  memory: 250M
+                requests:
+                  cpu: "0.2"
+                  memory: 200M
+# the user credentials will be generated from this secret
+# once the credentials are generated, this secret is no longer required
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongodb-user-secret
+type: Opaque
+stringData:
+  password: "#test123"
